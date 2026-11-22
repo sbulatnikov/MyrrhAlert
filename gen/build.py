@@ -93,16 +93,25 @@ def tv(name, x, y, w, h, fref, **kw):
     return X.textview(name, PL(x, y, w, h), fref, **kw)
 
 
-# ------------------------------------------------------------------ надпись-предупреждение
-# по центру сверху, поверх игры; клики сквозь неё проходят
-F('Warning', F_WARN, WARN, 'center', literal='НЕДОСТАТОЧНО МИРРЫ', outline=1)
-X.textview('Warning', PL(0, 170, 900, 60, 'WIDGET_ALIGN_CENTER'), '../Texts/Warning.txt', visible=False)
+# ------------------------------------------------------------------ строки окна = запасы (порядок как в MA.RESOURCES)
+ROWS = ['Предупреждать, если мирры меньше',
+        'Предупреждать, если мана-батарей меньше',
+        'Предупреждать, если модулей памяти меньше']
+N = len(ROWS)
+
+# ------------------------------------------------------------------ надписи-предупреждения
+# по центру сверху, одна под другой, поверх игры; клики сквозь них проходят. Текст ставит UI.lua.
+F('Warning', F_WARN, WARN, 'center', outline=1)
+for i in range(1, N + 1):
+    X.textview('Warning%d' % i, PL(0, 170 + (i - 1) * 46, 900, 60, 'WIDGET_ALIGN_CENTER'), '../Texts/Warning.txt', visible=False)
 
 # ------------------------------------------------------------------ окно настроек
-W_, H_ = 300, 172           # окно (макет)
-WW, WH = P(W_), P(H_)
 HDR = 40
 PAD = 14
+ROW0, ROW_H = 52, 62            # первая строка и шаг строк
+BTN_Y = ROW0 + N * ROW_H
+W_, H_ = 300, BTN_Y + 30 + 14   # окно (макет)
+WW, WH = P(W_), P(H_)
 
 # --- шапка: за неё окно перетаскивается
 F('TitleText', F_TITLE, TXT, literal='MyrrhAlert')
@@ -116,33 +125,35 @@ X.panel('Header', PL(0, 0, WW, P(HDR)), back=HDR_FRAME,
         children=['AccentMark.(WidgetPanel).xdb', 'TitleText.(WidgetTextView).xdb', 'HdrClose.(WidgetButton).xdb'])
 X.panel('HeaderLine', PL(1, P(HDR) - 1, WW - 2, 1), back=LINE_TEX, transparent=True)
 
-# --- порог: подпись, поле ввода, кнопка
-F('ThresholdLabel', F_BODY, TXT, literal='Предупреждать, если мирры меньше')
-tv('ThresholdLabel', P(PAD), P(52), P(W_ - 2 * PAD), P(22), '../Texts/ThresholdLabel.txt')
-
+# --- строка запаса: подпись, под ней поле порога и «Сейчас: N»
 IW, IH = P(120), P(30)
+REST_X, REST_W = PAD + 120 + 10, W_ - 2 * PAD - 130
 F('ThresholdEdit', F_BODY, TXT)
-X.panel('ThresholdFocus', PL(0, 0, IW, IH), back=FIELD_FOCUS, transparent=True, visible=False)
-# 10 знаков — это порог до 9 999 999 999 (MA.THRESHOLD_MAX); фильтр INTEGER пропускает только цифры
-X.editline('ThresholdEdit', PL(P(10), 0, IW - P(20), IH), '../Texts/ThresholdEdit.txt', CURSOR, SELECTION, 10,
-           'ma_threshold_enter', 'ma_threshold_esc', focus='ma_threshold_focus', filter_alias='INTEGER')
-X.panel('ThresholdBox', PL(P(PAD), P(80), IW, IH), back=FIELD,
-        children=['ThresholdFocus.(WidgetPanel).xdb', 'ThresholdEdit.(WidgetEditLine).xdb'])
+F('AmountText', F_BODY, TXT2)
+children = ['Header.(WidgetPanel).xdb', 'HeaderLine.(WidgetPanel).xdb']
+for i, label in enumerate(ROWS, 1):
+    y = ROW0 + (i - 1) * ROW_H
+    F('ThresholdLabel%d' % i, F_BODY, TXT, literal=label)
+    tv('ThresholdLabel%d' % i, P(PAD), P(y), P(W_ - 2 * PAD), P(22), '../Texts/ThresholdLabel%d.txt' % i)
+    X.panel('ThresholdFocus%d' % i, PL(0, 0, IW, IH), back=FIELD_FOCUS, transparent=True, visible=False)
+    # 10 знаков — это порог до 9 999 999 999 (MA.THRESHOLD_MAX); фильтр INTEGER пропускает только цифры
+    X.editline('ThresholdEdit%d' % i, PL(P(10), 0, IW - P(20), IH), '../Texts/ThresholdEdit.txt', CURSOR, SELECTION, 10,
+               'ma_threshold_enter', 'ma_threshold_esc', focus='ma_threshold_focus', filter_alias='INTEGER')
+    X.panel('ThresholdBox%d' % i, PL(P(PAD), P(y + 24), IW, IH), back=FIELD,
+            children=['ThresholdFocus%d.(WidgetPanel).xdb' % i, 'ThresholdEdit%d.(WidgetEditLine).xdb' % i])
+    tv('AmountText%d' % i, P(REST_X), P(y + 24), P(REST_W), IH, '../Texts/AmountText.txt')
+    children += ['ThresholdLabel%d.(WidgetTextView).xdb' % i, 'ThresholdBox%d.(WidgetPanel).xdb' % i,
+                 'AmountText%d.(WidgetTextView).xdb' % i]
 
+# --- кнопка и подсказка про ноль
 F('ApplyBtn', F_BODY, '#FFFFFF', 'center', tag='button_label')
-X.button('Apply', PL(P(PAD + 120 + 10), P(80), P(W_ - 2 * PAD - 130), IH),
+X.button('Apply', PL(P(PAD), P(BTN_Y), IW, IH),
          [{'normal': APPLY['n'], 'hover': APPLY['h'], 'pressed': APPLY['p'], 'text': X.text_file('Apply', 'Применить'),
            'fmt': '../Texts/ApplyBtn.txt', 'reaction': 'ma_apply'}])
+F('HintText', F_SMALL, TXT_OFF, literal='0 — не предупреждать')
+tv('HintText', P(REST_X), P(BTN_Y), P(REST_W), IH, '../Texts/HintText.txt')
+children += ['Apply.(WidgetButton).xdb', 'HintText.(WidgetTextView).xdb']
 
-# --- сколько мирры сейчас и подсказка про ноль
-F('AmountText', F_BODY, TXT2)
-tv('AmountText', P(PAD), P(120), P(W_ - 2 * PAD), P(20), '../Texts/AmountText.txt')
-F('HintText', F_SMALL, TXT_OFF, literal='0 — предупреждение выключено')
-tv('HintText', P(PAD), P(142), P(W_ - 2 * PAD), P(18), '../Texts/HintText.txt')
+X.panel('MAWindow', PL(440, 240, WW, WH), back=WIN_FRAME, children=children, visible=False, priority=900)
 
-X.panel('MAWindow', PL(440, 240, WW, WH), back=WIN_FRAME,
-        children=['Header.(WidgetPanel).xdb', 'HeaderLine.(WidgetPanel).xdb', 'ThresholdLabel.(WidgetTextView).xdb',
-                  'ThresholdBox.(WidgetPanel).xdb', 'Apply.(WidgetButton).xdb', 'AmountText.(WidgetTextView).xdb',
-                  'HintText.(WidgetTextView).xdb'], visible=False, priority=900)
-
-X.form('MainForm', ['Warning.(WidgetTextView).xdb', 'MAWindow.(WidgetPanel).xdb'])
+X.form('MainForm', ['Warning%d.(WidgetTextView).xdb' % i for i in range(1, N + 1)] + ['MAWindow.(WidgetPanel).xdb'])

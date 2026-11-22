@@ -13,7 +13,7 @@ import strip_debug  # noqa: E402  — отладка только в сборк�
 
 NAME = 'MyrrhAlert'
 VERSION = re.search(r'MA\.VERSION = "([^"]+)"', open(os.path.join(ROOT, 'lua', 'Util.lua'), encoding='utf-8').read()).group(1)
-SCRIPTS = ['LibDnD', 'Util', 'Config', 'Myrrh', 'UI', 'Main']
+SCRIPTS = ['LibDnD', 'Util', 'Config', 'Stock', 'UI', 'Main']
 
 
 def text(rel, s):

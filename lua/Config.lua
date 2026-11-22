@@ -2,7 +2,7 @@
 -- MyrrhAlert / Config.lua
 -- Настройки — глобальные, одни на всех персонажей.
 -- Файл: Mods/Configs/MyrrhAlert/user.cfg, блок global -> ... -> data:
---   ma = { version = 1, threshold = <число> }
+--   ma = { version = 2, myrrh = <порог>, battery = <порог>, memory = <порог> }
 -- Секция пишется целиком, поэтому перед записью читаем её заново.
 --------------------------------------------------------------------------------
 MA.Cfg = {}
@@ -24,9 +24,14 @@ end
 function Cfg.Load()
 	local g = ReadSection()
 	local c = type( g.ma ) == "table" and g.ma or {}
-	c.version = 1
+	-- версия 1 хранила один порог мирры в поле threshold
+	if c.myrrh == nil then c.myrrh = c.threshold end
+	c.threshold = nil
+	c.version = 2
 	-- починка: порог в файле мог быть испорчен руками — тогда берём порог по умолчанию
-	c.threshold = Cfg.NormalizeThreshold( c.threshold ) or MA.THRESHOLD_DEFAULT
+	for _, r in ipairs( MA.RESOURCES ) do
+		c[ r.key ] = Cfg.NormalizeThreshold( c[ r.key ] ) or r.default
+	end
 	MA.cfg = c
 end
 
@@ -36,7 +41,8 @@ function Cfg.Save()
 	userMods.SetGlobalConfigSection( common.GetAddonName(), g )
 end
 
-function Cfg.SetThreshold( n )
-	MA.cfg.threshold = n
+-- key — запас из MA.RESOURCES
+function Cfg.SetThreshold( key, n )
+	MA.cfg[ key ] = n
 	Cfg.Save()
 end
