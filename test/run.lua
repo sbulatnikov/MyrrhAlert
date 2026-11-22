@@ -109,13 +109,20 @@ typeIn( "" )
 REACTIONS.ma_threshold_enter( { widget = edit } )
 check( "пустое поле: порог не меняется, в поле прежний", MA.cfg.threshold == 150 and edit.text == "150" )
 
-typeIn( "9999999" )
+-- мирры бывают сотни миллионов: порог и количество такого размера работают, в окне разряды разделены
+setMyrrh( 497523688 )
+typeIn( "500000000" )
 REACTIONS.ma_threshold_enter( { widget = edit } )
-check( "слишком большой порог обрезается до 1000000", MA.cfg.threshold == 1000000 and edit.text == "1000000" )
+check( "порог 500 млн принят, в поле — цифры без разделителей", MA.cfg.threshold == 500000000 and edit.text == "500000000" )
+check( "497 523 688 < 500 млн — надпись видна", warning() == true )
+check( "количество мирры — с пробелами между разрядами", WIDGETS.AmountText.val == "Сейчас мирры: 497 523 688" )
+check( "разделение разрядов", MA.Num( 0 ) == "0" and MA.Num( 999 ) == "999" and MA.Num( 1000 ) == "1 000" and MA.Num( 9999999999 ) == "9 999 999 999" )
+slash( "/myrrh 99999999999" )
+check( "слишком большой порог обрезается до 9999999999", MA.cfg.threshold == 9999999999 and edit.text == "9999999999" )
 
 typeIn( "77" )
 REACTIONS.ma_close( {} )
-check( "закрытие окна отбрасывает недописанное", win.visible == false and MA.cfg.threshold == 1000000 and edit.text == "1000000" and edit.focused == false )
+check( "закрытие окна отбрасывает недописанное", win.visible == false and MA.cfg.threshold == 9999999999 and edit.text == "9999999999" and edit.focused == false )
 
 -- настройки: чужие ключи секции не теряются, испорченный порог чинится
 CONFIG.MyrrhAlert = { other = "keep", ma = { threshold = "сломано" } }

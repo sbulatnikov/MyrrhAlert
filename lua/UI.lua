@@ -30,8 +30,8 @@ end
 local function Draw()
 	MA.Show( ui.warning, state.low )
 	MA.Show( ui.focus, editing )
-	MA.SetText( ui.amount, "Сейчас мирры: " .. state.amount )
-	local s = tostring( state.threshold )
+	MA.SetText( ui.amount, "Сейчас мирры: " .. MA.Num( state.amount ) )
+	local s = string.format( "%.0f", state.threshold )   -- без разделителей: поле принимает только цифры
 	if not editing and shownEdit ~= s then
 		shownEdit = s
 		ui.edit:SetText( MA.WS( s ) )

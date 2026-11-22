@@ -7,7 +7,7 @@ Global( "MA", {} )
 MA.VERSION = "0.1.0"
 MA.CURRENCY = "myrrh"            -- внутреннее имя мирры в игре (документация: avatar.GetCurrencyId)
 MA.THRESHOLD_DEFAULT = 100       -- порог, пока игрок не задал свой
-MA.THRESHOLD_MAX = 1000000       -- больше мирры у персонажа не бывает, а число в настройках остаётся разумным
+MA.THRESHOLD_MAX = 9999999999    -- 10 знаков, как в поле ввода: мирры у персонажа бывают сотни миллионов
 
 --------------------------------------------------------------------------------
 -- Строки
@@ -26,6 +26,16 @@ end
 
 function MA.Trim( s )
 	return ( string.gsub( s or "", "^%s*(.-)%s*$", "%1" ) )
+end
+
+-- Целое число с пробелами между разрядами: 497523688 -> «497 523 688»
+function MA.Num( n )
+	local s = string.format( "%.0f", n )
+	local head = #s % 3
+	local parts = {}
+	if head > 0 then parts[ 1 ] = string.sub( s, 1, head ) end
+	for i = head + 1, #s, 3 do parts[ #parts + 1 ] = string.sub( s, i, i + 2 ) end
+	return table.concat( parts, " " )
 end
 
 -- Ответ аддона игроку — строкой в чат, которую видит только он

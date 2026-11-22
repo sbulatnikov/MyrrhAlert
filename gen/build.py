@@ -123,8 +123,8 @@ tv('ThresholdLabel', P(PAD), P(52), P(W_ - 2 * PAD), P(22), '../Texts/ThresholdL
 IW, IH = P(120), P(30)
 F('ThresholdEdit', F_BODY, TXT)
 X.panel('ThresholdFocus', PL(0, 0, IW, IH), back=FIELD_FOCUS, transparent=True, visible=False)
-# 7 знаков — это порог до 1 000 000 (MA.THRESHOLD_MAX); фильтр INTEGER пропускает только цифры
-X.editline('ThresholdEdit', PL(P(10), 0, IW - P(20), IH), '../Texts/ThresholdEdit.txt', CURSOR, SELECTION, 7,
+# 10 знаков — это порог до 9 999 999 999 (MA.THRESHOLD_MAX); фильтр INTEGER пропускает только цифры
+X.editline('ThresholdEdit', PL(P(10), 0, IW - P(20), IH), '../Texts/ThresholdEdit.txt', CURSOR, SELECTION, 10,
            'ma_threshold_enter', 'ma_threshold_esc', focus='ma_threshold_focus', filter_alias='INTEGER')
 X.panel('ThresholdBox', PL(P(PAD), P(80), IW, IH), back=FIELD,
         children=['ThresholdFocus.(WidgetPanel).xdb', 'ThresholdEdit.(WidgetEditLine).xdb'])

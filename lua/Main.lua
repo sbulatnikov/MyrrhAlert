@@ -40,7 +40,7 @@ local function OnSlash( p )
 		return
 	end
 	SetThreshold( n )
-	MA.Chat( n > 0 and ( "порог " .. n .. ", мирры сейчас " .. Myrrh.Amount() ) or "предупреждение выключено (порог 0)" )
+	MA.Chat( n > 0 and ( "порог " .. MA.Num( n ) .. ", мирры сейчас " .. MA.Num( Myrrh.Amount() ) ) or "предупреждение выключено (порог 0)" )
 end
 
 local REACTIONS = {
