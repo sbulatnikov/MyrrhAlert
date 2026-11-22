@@ -27,8 +27,11 @@ userMods = {
 	SendSelfChatMessage = function( w ) CHAT[ #CHAT + 1 ] = w.s end,
 }
 
-EVENTS = {}
+EVENTS, REACTIONS = {}, {}
+DND = {}        -- что аддон отдал LibDnD: окно и то, за что его тянут
+DnD = { Init = function( movable, reacting ) DND.movable, DND.reacting = movable, reacting end }
 common = {
+	RegisterReactionHandler = function( f, r ) REACTIONS[ r ] = f end,
 	GetAddonName = function() return "MyrrhAlert" end,
 	RegisterEventHandler = function( f, ev )
 		local prev = EVENTS[ ev ]
@@ -40,6 +43,15 @@ common = {
 local Widget = {}
 Widget.__index = Widget
 function Widget.Show( w, on ) w.visible = on w.showCalls = w.showCalls + 1 end
+function Widget.SetVal( w, tag, v ) assert( tag == "value" ) w.val = v.s end
+function Widget.SetText( w, v ) w.text = v.s end
+function Widget.GetText( w ) return WS( w.text or "" ) end
+-- как в игре: смена фокуса поля ввода присылает реакцию
+function Widget.SetFocus( w, on )
+	if w.focused == on then return end
+	w.focused = on
+	REACTIONS.ma_threshold_focus( { active = on, widget = w } )
+end
 WIDGETS = {}
 mainForm = {}
 function mainForm.GetChildChecked( _, name )

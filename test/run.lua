@@ -24,6 +24,7 @@ local function lastChat() return CHAT[ #CHAT ] or "" end
 -- Запуск до входа в мир: аддон ждёт EVENT_AVATAR_CREATED
 EXISTS = false
 MYRRH = 37
+-- LibDnD в тестах заменён заглушкой DnD из mock.lua
 for _, s in ipairs( { "Util", "Config", "Myrrh", "UI", "Main" } ) do dofile( scripts .. "/" .. s .. ".lua" ) end
 check( "до входа в мир аддон не запущен", MA.cfg == nil and WIDGETS.Warning == nil )
 EXISTS = true
@@ -50,7 +51,7 @@ MYRRH = nil
 fire( "EVENT_CURRENCIES_CHANGED" )
 check( "валюты нет у персонажа — мирры 0, надпись видна", warning() == true and MA.Myrrh.Amount() == 0 )
 
--- команда /myrrh
+-- команда /myrrh <число>
 MYRRH = 250
 fire( "EVENT_CURRENCIES_CHANGED" )
 check( "250 при пороге 100 — надписи нет", warning() == false )
@@ -58,13 +59,9 @@ slash( "/myrrh 300" )
 check( "/myrrh 300: порог сохранён", MA.cfg.threshold == 300 and CONFIG.MyrrhAlert.ma.threshold == 300 )
 check( "/myrrh 300: надпись появилась сразу", warning() == true )
 check( "/myrrh 300: ответ в чат", string.find( lastChat(), "порог 300, мирры сейчас 250", 1, true ) ~= nil )
-
-local n = #CHAT
-slash( "/MYRRH" )
-check( "/myrrh без числа: только отчёт", #CHAT == n + 1 and MA.cfg.threshold == 300 )
 slash( "/myrrh много" )
 check( "не число: порог не меняется, есть подсказка", MA.cfg.threshold == 300 and string.find( lastChat(), "число", 1, true ) ~= nil )
-n = #CHAT
+local n = #CHAT
 slash( "/myrrhх 5" )
 slash( "/baa" )
 check( "чужие команды аддон не трогает", #CHAT == n and MA.cfg.threshold == 300 )
@@ -72,10 +69,53 @@ slash( "/myrrh 12.9" )
 check( "дробный порог округляется вниз", MA.cfg.threshold == 12 )
 slash( "/myrrh -5" )
 check( "отрицательный порог — это 0", MA.cfg.threshold == 0 )
+check( "порог 0: в ответе сказано, что выключено", string.find( lastChat(), "выключено", 1, true ) ~= nil )
 MYRRH = nil
 fire( "EVENT_CURRENCIES_CHANGED" )
 check( "порог 0 выключает предупреждение", warning() == false )
-check( "порог 0: в отчёте сказано, что выключено", string.find( lastChat(), "выключено", 1, true ) ~= nil )
+
+-- окно настроек
+local win, edit, focus = WIDGETS.MAWindow, WIDGETS.ThresholdEdit, WIDGETS.ThresholdFocus
+local function typeIn( text ) edit:SetFocus( true ) edit.text = text end
+check( "окно перетаскивается за шапку", DND.movable == win and DND.reacting == WIDGETS.Header )
+check( "до команды окно закрыто", win.visible == false )
+n = #CHAT
+MYRRH = 250
+slash( "/MYRRH" )
+check( "/myrrh открывает окно и ничего не пишет в чат", win.visible == true and #CHAT == n )
+check( "в окне — порог и количество мирры", edit.text == "0" and WIDGETS.AmountText.val == "Сейчас мирры: 250" )
+
+typeIn( "300" )
+check( "при вводе поле подсвечено, порог ещё прежний", focus.visible == true and MA.cfg.threshold == 0 )
+setMyrrh( 260 )
+check( "пока игрок печатает, его текст не затирается", edit.text == "300" and WIDGETS.AmountText.val == "Сейчас мирры: 260" )
+REACTIONS.ma_threshold_enter( { widget = edit } )
+check( "Enter: порог принят и сохранён", MA.cfg.threshold == 300 and CONFIG.MyrrhAlert.ma.threshold == 300 )
+check( "Enter: надпись появилась, подсветка снята", warning() == true and focus.visible == false and edit.focused == false )
+
+typeIn( "50" )
+REACTIONS.ma_threshold_esc( { widget = edit } )
+check( "Esc: порог прежний, в поле снова он", MA.cfg.threshold == 300 and edit.text == "300" and focus.visible == false )
+
+typeIn( "200" )
+REACTIONS.ma_apply( {} )
+check( "кнопка «Применить»: порог принят", MA.cfg.threshold == 200 and warning() == false and edit.focused == false )
+
+typeIn( "150" )
+edit:SetFocus( false )
+check( "потеря фокуса: порог принят", MA.cfg.threshold == 150 and edit.text == "150" )
+
+typeIn( "" )
+REACTIONS.ma_threshold_enter( { widget = edit } )
+check( "пустое поле: порог не меняется, в поле прежний", MA.cfg.threshold == 150 and edit.text == "150" )
+
+typeIn( "9999999" )
+REACTIONS.ma_threshold_enter( { widget = edit } )
+check( "слишком большой порог обрезается до 1000000", MA.cfg.threshold == 1000000 and edit.text == "1000000" )
+
+typeIn( "77" )
+REACTIONS.ma_close( {} )
+check( "закрытие окна отбрасывает недописанное", win.visible == false and MA.cfg.threshold == 1000000 and edit.text == "1000000" and edit.focused == false )
 
 -- настройки: чужие ключи секции не теряются, испорченный порог чинится
 CONFIG.MyrrhAlert = { other = "keep", ma = { threshold = "сломано" } }
