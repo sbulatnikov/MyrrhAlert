@@ -48,11 +48,20 @@ function MA.W( name )
 end
 
 local shown = setmetatable( {}, { __mode = "k" } )
+local texts = setmetatable( {}, { __mode = "k" } )
 
 function MA.Show( w, on )
 	on = on and true or false
 	if shown[ w ] ~= on then
 		shown[ w ] = on
 		w:Show( on )
+	end
+end
+
+-- Текст надписи (WidgetTextView с <r name="value"/> в формате)
+function MA.SetText( w, s )
+	if texts[ w ] ~= s then
+		texts[ w ] = s
+		w:SetVal( "value", MA.WS( s ) )
 	end
 end

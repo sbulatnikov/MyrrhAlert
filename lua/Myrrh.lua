@@ -16,8 +16,8 @@ function Myrrh.Amount()
 	return info.value
 end
 
--- Мирры меньше порога? Порог 0 выключает предупреждение.
-function Myrrh.IsLow()
+-- Мирры (amount) меньше порога? Порог 0 выключает предупреждение.
+function Myrrh.IsLow( amount )
 	local threshold = MA.cfg.threshold
-	return threshold > 0 and Myrrh.Amount() < threshold
+	return threshold > 0 and amount < threshold
 end
