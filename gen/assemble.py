@@ -25,7 +25,7 @@ shutil.rmtree(OUT, ignore_errors=True)
 subprocess.check_call([sys.executable, os.path.join(HERE, 'build.py'), OUT, os.path.join(ROOT, 'out', 'preview')])
 
 text('Texts/AddonName.txt', '%s v%s' % (NAME, VERSION))  # имя аддона в игре — всегда с версией
-text('Texts/AddonDescription.txt', 'Предупреждает, когда мирры меньше порога (/myrrh)')
+text('Texts/AddonDescription.txt', 'Предупреждает, когда мирры, мана-батарей или модулей памяти меньше порога (/myrrh)')
 
 sd = os.path.join(OUT, 'Scripts')
 os.makedirs(sd, exist_ok=True)
