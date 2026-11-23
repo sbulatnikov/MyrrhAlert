@@ -26,7 +26,7 @@ end
 
 -- Изменилось количество какой-то валюты: нас интересуют только мирра и модули памяти
 local function OnCurrencyValueChanged( p )
-	if Stock.IsOurCurrency( p.sysName ) then RefreshCurrencies() end
+	if Stock.IsOurCurrency( p ) then RefreshCurrencies() end
 end
 
 -- В сумке появился, пропал или изменился предмет (например, уменьшилась стопка батарей)
@@ -83,6 +83,7 @@ local function Start()
 	UI.Init()
 	for name, fn in pairs( REACTIONS ) do common.RegisterReactionHandler( fn, name ) end
 	common.RegisterEventHandler( OnCurrencyValueChanged, "EVENT_CURRENCY_VALUE_CHANGED" )
+	common.RegisterEventHandler( OnCurrencyValueChanged, "EVENT_HIDDEN_CURRENCY_VALUE_CHANGED" )
 	-- список валют меняется, когда у персонажа появляется первая мирра (или модуль памяти) или пропадает последняя
 	common.RegisterEventHandler( RefreshCurrencies, "EVENT_CURRENCIES_CHANGED" )
 	common.RegisterEventHandler( OnBagItem, "EVENT_CONTAINER_ITEM_ADDED" )

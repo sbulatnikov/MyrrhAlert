@@ -61,6 +61,10 @@ function mainForm.GetChildChecked( _, name )
 end
 
 -- Игра.
+-- BY_SYSNAME — какие валюты игра находит по внутреннему имени (в тестах модули памяти так не находятся: аддон не должен на это опираться).
+-- IN_LIST — отдаёт ли игра модули памяти в общем списке валют (иначе они видны только в своей категории).
+BY_SYSNAME = { myrrh = true }
+IN_LIST = true
 -- MYRRH, MODULES = nil — такой валюты у персонажа нет совсем (игра её не находит), иначе её количество.
 -- BAG — сумка: слот -> { name = название, count = сколько в стопке (nil — предмет не в стопке) }; nil — сумка не загружена.
 MYRRH, MODULES = nil, nil
@@ -72,6 +76,7 @@ ITEM_CONT_DEPOSITE = 1
 local function Currency( sysName, name )
 	local id = { sysName = sysName }
 	function id.GetInfo() return { sysName = sysName, name = WS( name ) } end
+	function id.IsEqual( a, b ) return a == b end
 	return id
 end
 local CUR = {
@@ -79,6 +84,7 @@ local CUR = {
 	gold = Currency( "gold_sys", "Золотые слитки" ),
 	memory = Currency( "memory_sys", "Модуль памяти" ),
 }
+CUR_ID = CUR
 local function Value( id )
 	if id == CUR.myrrh then return MYRRH end
 	if id == CUR.memory then return MODULES end
@@ -91,15 +97,20 @@ avatar = {
 	GetCurrencies = function()
 		local t, n = {}, 0
 		for _, key in ipairs( { "gold", "myrrh", "memory" } ) do
-			if Value( CUR[ key ] ) ~= nil then t[ n ] = CUR[ key ] n = n + 1 end
+			if Value( CUR[ key ] ) ~= nil and ( key ~= "memory" or IN_LIST ) then t[ n ] = CUR[ key ] n = n + 1 end
 		end
 		return t
 	end,
 	GetCurrencyId = function( sysName )
 		for _, id in pairs( CUR ) do
-			if id.sysName == sysName and Value( id ) ~= nil then return id end
+			if id.sysName == sysName and BY_SYSNAME[ sysName ] and Value( id ) ~= nil then return id end
 		end
 		return nil
+	end,
+	GetCurrencyCategories = function() return { [ 0 ] = "прочее", [ 1 ] = "астрал" } end,
+	GetCategoryCurrencies = function( category )
+		if category == "астрал" and MODULES ~= nil then return { [ 0 ] = CUR.gold, [ 1 ] = CUR.memory } end
+		return { [ 0 ] = CUR.gold }
 	end,
 	GetCurrencyValue = function( id )
 		assert( Value( id ) ~= nil, "нет такой валюты" )

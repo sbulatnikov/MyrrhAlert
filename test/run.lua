@@ -14,9 +14,10 @@ end
 
 local function fire( ev, p ) EVENTS[ ev ]( p or {} ) end
 local function slash( text ) fire( "EVENT_UNKNOWN_SLASH_COMMAND", { text = WS( text ) } ) end
+local function currencyEvent( key ) fire( "EVENT_CURRENCY_VALUE_CHANGED", { sysName = CUR_ID[ key ].sysName, id = CUR_ID[ key ], delta = 1 } ) end
 local function setMyrrh( n )
 	MYRRH = n
-	fire( "EVENT_CURRENCY_VALUE_CHANGED", { sysName = "myrrh", delta = 1 } )
+	currencyEvent( "myrrh" )
 end
 local function warning() return WIDGETS.Warning1 and WIDGETS.Warning1.visible end
 local function lastChat() return CHAT[ #CHAT ] or "" end
@@ -40,7 +41,7 @@ check( "99 < 100 — надпись видна", warning() == true )
 -- чужая валюта не трогает надпись и не дёргает виджет
 local calls = WIDGETS.Warning1.showCalls
 MYRRH = 500
-fire( "EVENT_CURRENCY_VALUE_CHANGED", { sysName = "gold", delta = 5 } )
+currencyEvent( "gold" )
 check( "чужая валюта: пересчёта нет", warning() == true and WIDGETS.Warning1.showCalls == calls )
 setMyrrh( 500 )
 setMyrrh( 600 )
@@ -180,15 +181,18 @@ REACTIONS.ma_apply( {} )
 check( "порог модулей принят кнопкой", MA.cfg.memory == 5 and edit3.focused == false )
 check( "модулей нет совсем — их 0, обе надписи видны по порядку",
 	MA.Stock.Amount( "memory" ) == 0 and warnings() == "НЕДОСТАТОЧНО МАНА-БАТАРЕЙ | НЕДОСТАТОЧНО МОДУЛЕЙ ПАМЯТИ" )
+-- список валют ещё не обновился, а событие про модули уже пришло: узнаём их по названию; в общем списке их нет
+IN_LIST = false
 MODULES = 3
-fire( "EVENT_CURRENCIES_CHANGED" )
-check( "модули появились среди ценностей: найдены по названию", MA.Stock.Amount( "memory" ) == 3 and WIDGETS.AmountText3.val == "Сейчас: 3" )
+currencyEvent( "memory" )
+check( "модули появились: найдены по названию в категории ценностей", MA.Stock.Amount( "memory" ) == 3 and WIDGETS.AmountText3.val == "Сейчас: 3" )
+IN_LIST = true
 MODULES = 8
-fire( "EVENT_CURRENCY_VALUE_CHANGED", { sysName = "memory_sys", delta = 5 } )
+currencyEvent( "memory" )
 check( "модулей стало 8 при пороге 5 — осталась только надпись про батареи", warnings() == "НЕДОСТАТОЧНО МАНА-БАТАРЕЙ" )
 MA.Cfg.SetThreshold( "battery", 0 )
 MODULES = 2
-fire( "EVENT_CURRENCY_VALUE_CHANGED", { sysName = "memory_sys", delta = -6 } )
+currencyEvent( "memory" )
 check( "надпись про модули поднимается в первую строку", warnings() == "НЕДОСТАТОЧНО МОДУЛЕЙ ПАМЯТИ" and WIDGETS.Warning2.visible == false )
 MA.Cfg.SetThreshold( "myrrh", 2000 )
 setMyrrh( 1000 )

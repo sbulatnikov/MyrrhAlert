@@ -11,7 +11,7 @@ MA.Stock = {}
 local Stock = MA.Stock
 
 local MYRRH = "myrrh"
-local memorySys = nil      -- внутреннее имя модулей памяти; узнаём, когда находим их среди ценностей
+local memoryId = nil       -- CurrencyId модулей памяти; узнаём, когда находим их среди ценностей
 local amounts = { myrrh = 0, battery = 0, memory = 0 }
 
 local function Has( s, part )
@@ -31,9 +31,8 @@ end
 --------------------------------------------------------------------------------
 -- Ценности: мирра и модули памяти
 --------------------------------------------------------------------------------
-local function CurrencyAmount( sysName )
-	local id = avatar.GetCurrencyId( sysName )
-	-- Ожидаем: пока у персонажа нет ни одной единицы валюты, игра её не находит (nil) — считаем, что её 0
+local function CurrencyAmount( id )
+	-- Ожидаем: пока у персонажа нет ни одной единицы валюты, игра её не находит (id = nil) — считаем, что её 0
 	if not id then return 0 end
 	local info = avatar.GetCurrencyValue( id )
 	-- Ожидаем: игра может не отдать количество (nil по документации) — считаем, что валюты 0
@@ -41,31 +40,47 @@ local function CurrencyAmount( sysName )
 	return info.value
 end
 
--- Найти модули памяти среди ценностей персонажа и запомнить их внутреннее имя
-local function FindMemory()
-	local ids = avatar.GetCurrencies()
-	-- Ожидаем: сразу после входа список ценностей может быть ещё не готов (nil) — найдём по EVENT_CURRENCIES_CHANGED
-	if type( ids ) ~= "table" then return end
+-- Модули памяти в списке валют (таблица игры с индексами от 0); nil, если их там нет
+local function MemoryIn( ids )
+	-- Ожидаем: сразу после входа список может быть ещё не готов (nil) — найдём по EVENT_CURRENCIES_CHANGED
+	if type( ids ) ~= "table" then return nil end
 	for _, id in pairs( ids ) do
 		local info = id:GetInfo()
 		-- Ожидаем: игра может не отдать описание валюты (nil) — такую пропускаем
-		if info and IsMemoryName( MA.S( info.name ) ) then
-			memorySys = info.sysName
-			return
-		end
+		if info and IsMemoryName( MA.S( info.name ) ) then return id end
 	end
+	return nil
+end
+
+-- Найти модули памяти среди ценностей персонажа: в общем списке, а если там нет — по категориям ценностей
+local function FindMemory()
+	local id = MemoryIn( avatar.GetCurrencies() )
+	if id then return id end
+	local categories = avatar.GetCurrencyCategories()
+	-- Ожидаем: список категорий может быть ещё не готов (nil) — найдём по EVENT_CURRENCIES_CHANGED
+	if type( categories ) ~= "table" then return nil end
+	for _, categoryId in pairs( categories ) do
+		id = MemoryIn( avatar.GetCategoryCurrencies( categoryId ) )
+		if id then return id end
+	end
+	return nil
 end
 
 function Stock.ReadCurrencies()
-	amounts.myrrh = CurrencyAmount( MYRRH )
-	-- Ожидаем: модулей памяти у персонажа ещё не было, и их имя неизвестно — ищем среди ценностей; не нашли — их 0
-	if not memorySys then FindMemory() end
-	amounts.memory = memorySys and CurrencyAmount( memorySys ) or 0
+	amounts.myrrh = CurrencyAmount( avatar.GetCurrencyId( MYRRH ) )
+	-- Ожидаем: модулей памяти у персонажа ещё не было — ищем их среди ценностей; не нашли — их 0
+	if not memoryId then memoryId = FindMemory() end
+	-- количество берём по самому CurrencyId, как и нашли: внутреннее имя для этого не нужно
+	amounts.memory = CurrencyAmount( memoryId )
 end
 
--- Это мирра или модули памяти? (sysName из EVENT_CURRENCY_VALUE_CHANGED)
-function Stock.IsOurCurrency( sysName )
-	return sysName == MYRRH or ( memorySys ~= nil and sysName == memorySys )
+-- Это мирра или модули памяти? (параметры EVENT_CURRENCY_VALUE_CHANGED)
+function Stock.IsOurCurrency( p )
+	if p.sysName == MYRRH then return true end
+	if memoryId then return p.id:IsEqual( memoryId ) end
+	-- Ожидаем: модули памяти ещё не найдены, а изменилась как раз их валюта — узнаём её по названию
+	local info = p.id:GetInfo()
+	return info ~= nil and IsMemoryName( MA.S( info.name ) )
 end
 
 --------------------------------------------------------------------------------
