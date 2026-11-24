@@ -162,7 +162,7 @@ def panel(name, pl, back=None, children=(), fname=None, **kw):
 def form(name, children):
     body = _children(children) + placement(0, 0, None, None, 'WIDGET_ALIGN_BOTH', 'WIDGET_ALIGN_BOTH') + \
         '\t<PickChildrenOnly>true</PickChildrenOnly>\n\t<Visible>true</Visible>\n'
-    body = '\t<Priority>1000</Priority>\n' + body
+    body = '\t<Priority>10000</Priority>\n' + body
     # файл остаётся MainForm.(WidgetForm).xdb, а имя формы в игре — имя аддона:
     # так её видно среди форм других аддонов и можно найти по имени
     return _write('WidgetForm', name, body, 'MainForm')
