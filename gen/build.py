@@ -157,4 +157,4 @@ children += ['Apply.(WidgetButton).xdb', 'HintText.(WidgetTextView).xdb']
 
 X.panel('MAWindow', PL(440, 240, WW, WH), back=WIN_FRAME, children=children, visible=False, priority=900)
 
-X.form('MainForm', ['Warning%d.(WidgetTextView).xdb' % i for i in range(1, N + 1)] + ['MAWindow.(WidgetPanel).xdb'])
+X.form('MyrrhAlert', ['Warning%d.(WidgetTextView).xdb' % i for i in range(1, N + 1)] + ['MAWindow.(WidgetPanel).xdb'])
