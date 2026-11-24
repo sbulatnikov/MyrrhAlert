@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>MyrrhAlert — промо-карточки</title>
+<!-- Исходник промо-карточек (1600x900). Карточка выбирается параметром ?card=1..3, картинки делает tools/promo/render.py -->
+<style>
+:root{--acc:#BB1ABD;--acc-b:#D045D2;--acc-i:#E58BE7;--win:#17141B;--hdr:#1D1922;--in:#100E13;--br:#3A2F42;--ctl:#3A3141;
+--line:#2A2330;--txt:#ECE6EF;--txt2:#BDB4C4;--off:#8C8393;--warn:#FF3B30}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1600px;height:900px;overflow:hidden;background:#0D0B10}
+body{font-family:"Segoe UI",Arial,sans-serif;color:var(--txt)}
+.card{display:none;position:relative;width:1600px;height:900px;overflow:hidden;
+background:radial-gradient(900px 600px at 78% 28%,rgba(187,26,189,.22),transparent 70%),
+radial-gradient(700px 520px at 96% 92%,rgba(40,120,130,.20),transparent 70%),
+radial-gradient(800px 500px at 48% 108%,rgba(150,90,40,.16),transparent 70%),
+linear-gradient(100deg,#0D0B10 0%,#110E15 38%,#15111A 100%)}
+.card.on{display:block}
+.left{position:absolute;left:72px;top:96px;width:430px}
+.tag{font-size:16px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;color:var(--acc-i);display:flex;align-items:center;gap:10px}
+.tag:before{content:"";width:12px;height:12px;border-radius:3px;background:var(--acc)}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:50px;line-height:1.08;margin:26px 0 30px;white-space:nowrap;color:#fff}
+.lead{font-size:21px;line-height:1.4;color:var(--txt)}
+.pts{margin-top:34px;display:flex;flex-direction:column;gap:22px}
+.pt{display:flex;gap:14px;align-items:flex-start;font-size:19px;line-height:1.32}
+.ic{flex:none;width:36px;height:36px;border-radius:8px;background:#1F1A24;border:1px solid var(--ctl);display:flex;align-items:center;
+justify-content:center;font-weight:700;font-size:18px;color:var(--acc-i)}
+.foot{position:absolute;left:72px;bottom:56px;font-size:16px;color:var(--off)}
+.foot b{font-family:Georgia,serif;font-variant-numeric:lining-nums;font-size:21px;color:#fff;margin-right:12px}
+code{font-family:Consolas,monospace;font-size:.95em;background:#1F1A24;border:1px solid var(--ctl);border-radius:5px;padding:1px 7px;color:var(--acc-i)}
+
+/* условный экран игры: рамка, намёк на интерфейс и надписи аддона */
+.screen{position:absolute;left:540px;top:110px;width:988px;height:680px;border-radius:14px;border:1px solid var(--br);overflow:hidden;
+background:radial-gradient(520px 300px at 50% 62%,rgba(90,70,120,.30),transparent 75%),linear-gradient(180deg,#14111A 0%,#0F0D13 100%);
+box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.cap{position:absolute;left:540px;top:64px;font-size:18px;color:var(--txt2)}
+.warns{position:absolute;left:0;right:0;top:92px;text-align:center}
+.warn{font-size:44px;font-weight:600;letter-spacing:.5px;color:var(--warn);line-height:64px;
+text-shadow:-2px 0 #000,2px 0 #000,0 -2px #000,0 2px #000,0 0 18px rgba(255,59,48,.35)}
+.ghost{position:absolute;border-radius:8px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06)}
+.bar{position:absolute;height:12px;border-radius:6px;background:rgba(255,255,255,.07)}
+.note{position:absolute;left:0;right:0;bottom:26px;text-align:center;font-size:17px;color:var(--off)}
+
+/* таблица запасов */
+.tbl{position:absolute;left:540px;top:478px;width:988px;border-radius:14px;border:1px solid var(--br);background:rgba(23,20,27,.94);
+box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+.tr{display:grid;grid-template-columns:250px 300px 1fr;align-items:center;padding:0 28px;height:62px;border-top:1px solid var(--line);font-size:20px}
+.tr.h{height:50px;border-top:0;background:var(--hdr);font-size:15px;letter-spacing:1.6px;text-transform:uppercase;color:var(--off)}
+.tr span:nth-child(2){color:var(--txt2)}
+.tr span:nth-child(3){color:var(--warn);font-weight:600}
+.screen.small{height:330px}
+.screen.small .warns{top:54px}
+
+/* окно настроек — как в игре, увеличено вдвое */
+.win{position:absolute;left:760px;top:128px;width:600px;height:592px;border-radius:22px;background:var(--win);border:2px solid var(--br);
+box-shadow:0 40px 100px rgba(0,0,0,.6)}
+.whdr{height:80px;border-radius:20px 20px 0 0;background:var(--hdr);border-bottom:2px solid var(--line);display:flex;align-items:center;padding:0 24px}
+.whdr i{width:24px;height:24px;border-radius:7px;background:var(--acc);margin-right:18px}
+.whdr b{font-family:Georgia,serif;font-weight:400;font-size:34px;flex:1}
+.whdr s{text-decoration:none;font-size:34px;color:var(--txt2);line-height:1}
+.row{padding:22px 28px 0}
+.row p{font-size:30px;line-height:44px}
+.row div{display:flex;align-items:center;gap:20px;margin-top:4px}
+.fld{width:240px;height:60px;border-radius:12px;background:var(--in);border:2px solid var(--ctl);font-size:30px;line-height:56px;padding:0 20px}
+.fld.f{border-color:var(--acc-i)}
+.fld.f:after{content:"";display:inline-block;width:3px;height:34px;background:var(--acc-i);vertical-align:-6px;margin-left:3px}
+.row em{font-style:normal;font-size:30px;color:var(--txt2)}
+.btn{width:240px;height:60px;border-radius:12px;background:var(--acc);border:2px solid var(--acc-b);font-size:30px;line-height:56px;text-align:center;color:#fff}
+.hint{font-size:26px;color:var(--off)}
+.chat{position:absolute;left:760px;top:748px;width:600px;display:flex;gap:16px}
+.chat div{flex:1;white-space:nowrap;border-radius:10px;background:rgba(16,14,19,.9);border:1px solid var(--ctl);padding:12px 18px;font-family:Consolas,monospace;font-size:19px;color:#F0D36B}
+.chat span{font-family:"Segoe UI",Arial,sans-serif;font-size:15px;color:var(--off);margin-left:10px}
+</style></head>
+<body>
+
+<!-- 1. Обложка -->
+<section class="card" id="c1">
+  <div class="left">
+    <div class="tag">Аддон для Аллодов Онлайн</div>
+    <h1>Запас<br>под присмотром</h1>
+    <p class="lead">MyrrhAlert пишет вверху экрана, когда у персонажа заканчиваются мирра, мана-батареи или модули памяти.</p>
+    <div class="pts">
+      <div class="pt"><div class="ic">!</div><div>Надпись висит, пока запаса меньше порога</div></div>
+      <div class="pt"><div class="ic">✓</div><div>Пополнили запас — надпись пропадает сама</div></div>
+      <div class="pt"><div class="ic">3</div><div>Свой порог у каждого из трёх запасов</div></div>
+    </div>
+  </div>
+  <div class="foot"><b>MyrrhAlert 0.1.0</b>бета-версия</div>
+  <div class="cap">Так выглядит предупреждение на экране игры</div>
+  <div class="screen">
+    <div class="warns"><div class="warn">НЕДОСТАТОЧНО МИРРЫ</div></div>
+    <div class="ghost" style="left:28px;top:28px;width:230px;height:64px"></div>
+    <div class="bar" style="left:44px;top:46px;width:150px"></div><div class="bar" style="left:44px;top:66px;width:110px"></div>
+    <div class="ghost" style="right:28px;top:28px;width:150px;height:150px;border-radius:75px"></div>
+    <div class="ghost" style="left:294px;bottom:70px;width:400px;height:52px"></div>
+    <div class="ghost" style="left:28px;bottom:70px;width:220px;height:130px"></div>
+    <div class="note">Надпись не мешает кликам: они проходят сквозь неё</div>
+  </div>
+</section>
+
+<!-- 2. Три запаса -->
+<section class="card" id="c2">
+  <div class="left">
+    <div class="tag">Что считает</div>
+    <h1>Три запаса —<br>три надписи</h1>
+    <p class="lead">Не хватает сразу нескольких — надписи идут одна под другой.</p>
+    <div class="pts">
+      <div class="pt"><div class="ic">1</div><div>Мирра — из ценностей персонажа</div></div>
+      <div class="pt"><div class="ic">2</div><div>Мана-батареи — все стопки в сумке вместе</div></div>
+      <div class="pt"><div class="ic">3</div><div>Модули памяти — из ценностей</div></div>
+    </div>
+  </div>
+  <div class="foot"><b>MyrrhAlert</b>2 / 3</div>
+  <div class="screen small" style="top:96px">
+    <div class="warns">
+      <div class="warn">НЕДОСТАТОЧНО МИРРЫ</div>
+      <div class="warn">НЕДОСТАТОЧНО МАНА-БАТАРЕЙ</div>
+      <div class="warn">НЕДОСТАТОЧНО МОДУЛЕЙ ПАМЯТИ</div>
+    </div>
+  </div>
+  <div class="tbl">
+    <div class="tr h"><span>Что считает</span><span>Где</span><span style="color:var(--off);font-weight:400">Надпись</span></div>
+    <div class="tr"><span>Мирра</span><span>ценности</span><span>НЕДОСТАТОЧНО МИРРЫ</span></div>
+    <div class="tr"><span>Мана-батареи</span><span>сумка, все стопки вместе</span><span>НЕДОСТАТОЧНО МАНА-БАТАРЕЙ</span></div>
+    <div class="tr"><span>Модули памяти</span><span>ценности</span><span>НЕДОСТАТОЧНО МОДУЛЕЙ ПАМЯТИ</span></div>
+  </div>
+</section>
+
+<!-- 3. Настройка -->
+<section class="card" id="c3">
+  <div class="left">
+    <div class="tag">Настройка</div>
+    <h1>Пороги —<br>в одном окне</h1>
+    <p class="lead">Команда <code>/myrrh</code> в чате открывает окно настроек: у каждого запаса — порог и сколько есть сейчас.</p>
+    <div class="pts">
+      <div class="pt"><div class="ic">✓</div><div>Enter или «Применить» — сохранить, Esc — вернуть прежнее</div></div>
+      <div class="pt"><div class="ic">0</div><div>Порог 0 выключает предупреждение</div></div>
+      <div class="pt"><div class="ic">≡</div><div>Пороги общие для всех персонажей</div></div>
+    </div>
+  </div>
+  <div class="foot"><b>MyrrhAlert</b>3 / 3</div>
+  <div class="win">
+    <div class="whdr"><i></i><b>MyrrhAlert</b><s>×</s></div>
+    <div class="row"><p>Мирры меньше, чем</p><div><span class="fld f">100</span><em>Сейчас: 64</em></div></div>
+    <div class="row"><p>Мана-батарей в сумке меньше, чем</p><div><span class="fld">20</span><em>Сейчас: 137</em></div></div>
+    <div class="row"><p>Модулей памяти меньше, чем</p><div><span class="fld">0</span><em>Сейчас: 2 450</em></div></div>
+    <div class="row"><div style="margin-top:14px"><span class="btn">Применить</span><span class="hint">0 — не предупреждать</span></div></div>
+  </div>
+  <div class="chat"><div>/myrrh<span>окно настроек</span></div><div>/myrrh 100<span>порог мирры без окна</span></div></div>
+</section>
+
+<script>
+var n = (location.search.match(/card=(\d)/) || [0, '1'])[1];
+document.getElementById('c' + n).className += ' on';
+</script>
+</body></html>

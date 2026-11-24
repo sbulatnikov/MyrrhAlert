@@ -20,6 +20,8 @@ lua\     скрипты (UTF-8): Util, Config, Stock (логика), UI, Main; L
 gen\     assemble.py — собирает папку аддона; build.py — виджеты, тексты и текстуры окна (нужны numpy и Pillow)
 test\    тесты на заглушках API игры: sh test/run.sh
 release\ описание, краткое описание, список изменений, промо-картинки
+tools\   strip_debug.py — вырезает отладку при сборке; promo\ — исходник промо-карточек (cards.html) и render.py,
+         который снимает их в release\promo (нужен Chrome или Edge)
 ```
 
 Сборка и установка из корня `C:\Development\Allods`: `python tools\build.py MyrrhAlert [--release]`.
